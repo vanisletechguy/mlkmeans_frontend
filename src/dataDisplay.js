@@ -1,18 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+//dataDisplay.js
+import React, { } from 'react';
+//import axios from 'axios';
 
-function DataDisplay() {
-    const [data, setData] = useState([]);
+function DataDisplay( {data}) {
 
-    useEffect(() => {
-        axios.get('http://localhost:3001/data')
-            .then(response => {
-                setData(response.data);
-            })
-            .catch(error => {
-                console.error('Error fetching data: ', error);
-            });
-    }, []);
+    if (!data) {
+        return <p>Loading data...</p>; // or any other placeholder content
+    }
 
     return (
         <div>
@@ -33,11 +27,9 @@ function DataDisplay() {
                             <td>{item.z}</td>
                         </tr>
                     ))}
-                    </tbody>
-                </table>
-            </div>
+                </tbody>
+            </table>
+        </div>
     );
 }
-
 export default DataDisplay;
-

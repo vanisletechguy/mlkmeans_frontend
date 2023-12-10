@@ -1,3 +1,4 @@
+//clusterDataDisplay.js
 import React, {useState, useEffect} from 'react';
 
 function ClusteredDataDisplay({ clusterResult, selectedItem, onItemSelected }) {
@@ -7,6 +8,8 @@ function ClusteredDataDisplay({ clusterResult, selectedItem, onItemSelected }) {
     const triggerForceUpdate = () => {
         setForceUpdate(prev => prev + 1);
     };
+
+    //console.log('Cluster result in display:', clusterResult);
 
     useEffect(() => {
         console.log("Selected item changed:", selectedItem);
@@ -25,17 +28,14 @@ function ClusteredDataDisplay({ clusterResult, selectedItem, onItemSelected }) {
             item.x === selectedItem.x && 
             item.y === selectedItem.y && 
             item.z === selectedItem.z;
-
-        console.log("Row selected status:", isSelected, "for item:", item);
-
+        //console.log("Row selected status:", isSelected, "for item:", item);
         return isSelected;
     };
 
     const handleRowClick = (itemData) => {
         onItemSelected(itemData); // Update selectedItem in App.js
         setForceUpdate(prev => prev + 1); // Force update on row click
-        console.log("Row clicked:", itemData);
-
+        //console.log("Row clicked:", itemData);
     };
 
     const renderTable = (data, clusterId) => (
@@ -52,9 +52,8 @@ function ClusteredDataDisplay({ clusterResult, selectedItem, onItemSelected }) {
                 <tbody>
                     {data.map((item, index) => (
                         <tr key={index}
-                        onClick={() => handleRowClick(item)}
-                        className={isItemSelected(item) ? 'selectedRow' : 'unselectedRow'}>
-
+                            onClick={() => handleRowClick(item)}
+                            className={isItemSelected(item) ? 'selectedRow' : 'unselectedRow'}>
                         <td>{item.x}</td>
                         <td>{item.y}</td>
                         <td>{item.z}</td>
@@ -74,4 +73,3 @@ function ClusteredDataDisplay({ clusterResult, selectedItem, onItemSelected }) {
 }
 
 export default ClusteredDataDisplay;
-

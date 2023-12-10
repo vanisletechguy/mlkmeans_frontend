@@ -1,53 +1,19 @@
+//visualization.js
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-
 
 const VisualizationComponent = ({ clusterData, onSelected, selectedItem }) => {
     const mountRef = useRef(null);
     const selectedSphereRef = useRef(null); // useRef to keep track of the selected sphere
     const sceneRef = useRef(null);
 
-
-
-    /*
-useEffect(() => {
-    // Initialize scene, camera, and renderer
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const width = mountRef.current.clientWidth;
-    const height = mountRef.current.clientHeight;
-
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.position.set(20, 20, 30);
-    camera.lookAt(new THREE.Vector3(8, 8, 10));
-
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(width, height);
-    mountRef.current.appendChild(renderer.domElement);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(8, 10, 10);
-    controls.update();
-
-    const animate = () => {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-    };
-    animate();
-
-    return () => {
-        mountRef.current.removeChild(renderer.domElement);
-    };
-}, []); // Empty dependency array to run only on mount
-
-*/
-
-
-
-
-
     useEffect(() => {
+
+        if (!clusterData || clusterData.length === 0) {
+            return;
+        }
+
         // Visual update for the selected sphere
         if (sceneRef && selectedItem) {
             sceneRef.current.traverse(function (object) {
@@ -61,7 +27,6 @@ useEffect(() => {
             });
         }
     }, [selectedItem]);
-
 
     useEffect(() => {
 
@@ -91,7 +56,7 @@ useEffect(() => {
                 selectedSphereRef.current = newSelectedObject;
                 onSelected(newSelectedObject.userData);
             }
-        }; 
+        }; // onDocumentMouseDown function ends
 
     document.addEventListener('mousedown', onDocumentMouseDown, false);
 
@@ -103,8 +68,8 @@ useEffect(() => {
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.position.set(20, 20, 30); // X, Y, Z
-    camera.lookAt(new THREE.Vector3(8, 8, 10)); // Adjust based on your data's center
+        //    camera.position.set(20, 20, 30); // X, Y, Z
+        //camera.lookAt(new THREE.Vector3(8, 8, 10)); // Adjust based on your data's center
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(width, height);
@@ -114,19 +79,6 @@ useEffect(() => {
     const cluster0Material = new THREE.MeshBasicMaterial({ color: 'red' });
     const cluster1Material = new THREE.MeshBasicMaterial({ color: 'blue' });
     const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     clusterData.forEach(dataPoint => {
         // Determine the color of the sphere based on clustering
@@ -163,38 +115,26 @@ useEffect(() => {
 
 
 
-        /*
-    clusterData.forEach(dataPoint => {
-      // Create a unique material for each sphere
-      const sphereMaterial = new THREE.MeshBasicMaterial({ 
-        color: dataPoint.clusterId === 0 ? 0xff0000 : 0x0000ff, // Initially red or blue
-      });
+    let sumX = 0, sumY = 0, sumZ = 0;
+        clusterData.forEach(point => {
+            sumX += point.x;
+            sumY += point.y;
+            sumZ += point.z;
+        });
 
-      const sphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.5, 32, 32), // Sphere size 0.5
-        sphereMaterial
-      );
+    const centerX = sumX / clusterData.length;
+    const centerY = sumY / clusterData.length;
+    const centerZ = sumZ / clusterData.length;
+    const center = new THREE.Vector3(centerX, centerY, centerZ);
 
-      sphere.position.set(dataPoint.x, dataPoint.y, dataPoint.z);
-      sphere.userData = {
-          //  id: dataPoint.id,
-        x: dataPoint.x,
-        y: dataPoint.y,
-        z: dataPoint.z,
-        clusterId: dataPoint.clusterId
-      };
-      scene.add(sphere);
-    });
-    */
-
-
-
-
-
-
+    // Update camera position and orbit controls target
+    camera.position.set(centerX, centerY, centerZ + 20); // Adjust '30' to set how far away the camera is
+    camera.lookAt(center);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(8, 10, 10);
+        //controls.target.set(8, 10, 10);
+    controls.target.set(centerX, centerY, centerZ);
+
     controls.update();
 
     renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
@@ -219,4 +159,3 @@ useEffect(() => {
 };
 
 export default VisualizationComponent;
-
