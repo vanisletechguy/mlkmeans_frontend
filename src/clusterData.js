@@ -1,23 +1,24 @@
-
 // ClusterData.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Papa from 'papaparse';
 
-function ClusterData({ data, onClusterResults, onDataChange }) {
+function ClusterData({ data, onClusterResults, onDataChange}) {
     const [isLoading, setIsLoading] = useState(false);
+    const [numClusters, setNumClusters] = useState(2); 
+    const [autoDetectClusters, setAutoDetectClusters] = useState(false);
 
-    useEffect(() => {
-        //   setData(data);
-    }, [data]);
-
+    const handleSliderChange = (event) => {
+        console.log('slider changed, new value is:', Number(event.target.value));
+        setNumClusters(Number(event.target.value)); 
+    };
 
     const handleFileUpload = event => {
         const file = event.target.files[0];
         Papa.parse(file, {
             header: true,
             dynamicTyping: true,
-            skipEmptyLines: true, // Skip empty lines
+            skipEmptyLines: true, 
 
             complete: function(results) {
                 const uploadedData = results.data
@@ -43,7 +44,15 @@ function ClusterData({ data, onClusterResults, onDataChange }) {
 
         console.log('Sending data to cluster:', data);
 
-        axios.post('http://localhost:3001/cluster-data', data)
+        const postData = {
+            data: data
+        };
+
+        if (!autoDetectClusters) {
+            postData.K = numClusters;
+        }
+
+        axios.post('http://localhost:3001/cluster-data', postData)
         .then(response => {
             console.log('Cluster response:', response.data);
             onClusterResults(response.data);
@@ -57,12 +66,33 @@ function ClusterData({ data, onClusterResults, onDataChange }) {
 
     return (
         <div>
-            <input type="file" onChange={handleFileUpload} accept=".csv" />
+            <p>Select Find Cluster OR upload a new csv data file</p>
+            <p>
+                <input
+                    type="checkbox"
+                    checked={autoDetectClusters}
+                    onChange={() => setAutoDetectClusters(!autoDetectClusters)}
+                />
+                Let backend decide the number of clusters
+            </p>
+
+
+            <p>Select number of clusters:</p>
+                <input
+                    type="range"
+                    min="2"
+                    max="5"
+                    value={numClusters}
+                    onChange={handleSliderChange}
+                />
+            <p>Number of clusters (K): {numClusters}</p>
+
+
             <button onClick={handleClusterData} disabled={isLoading}>
-            {isLoading ? 'Clustering...' : 'Cluster Data'}
-            </button>
+            {isLoading ? 'Clustering...' : 'Find Clusters in Data'}
+            </button>{'   '}
+            <input type="file" onChange={handleFileUpload} accept=".csv" />
         </div>
     );
 }
 export default ClusterData;
-

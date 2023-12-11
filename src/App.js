@@ -10,9 +10,9 @@ import axios from 'axios';
 function App() {
 
     const [data, setData] = useState([]);
-
     const [clusterResult, setClusterResult] = useState([]);
     const [selectedItem, setSelectedItem] = useState([]);
+    const [dataReloadIdentifier, setDataReloadIdentifier] = useState(0);
 
     useEffect(() => {
         axios.get('http://localhost:3001/data')
@@ -26,6 +26,7 @@ function App() {
 
     const handleDataChange = (newData) => {
         setData(newData);
+        setDataReloadIdentifier(prev => prev + 1);
     };
 
     const handleClusterResults = (results) => {
@@ -45,7 +46,12 @@ function App() {
                 <div className="card mb-3">
                     <div className="card-header"><h1>ML Cluster Analysis</h1></div>
                     <div className="card-body">
-                        <ClusterData data={data} onClusterResults={handleClusterResults} onDataChange={handleDataChange} />
+                        <ClusterData 
+                            data={data} 
+                            onClusterResults={handleClusterResults} 
+                        onDataChange={handleDataChange} /> 
+                        {/*                            numClusters={numClusters}
+                            setNumClusters={setNumClusters}  /> */}
                     </div>
                 </div>
                 <div className="card">
@@ -56,24 +62,26 @@ function App() {
                 </div>
             </div>
 
-            {/* Visualization and ClusterDataDisplay */}
             <div className="col-md-8 p-3">
+                { /*Visualization and ClusterDataDisplay */  }
                 <div className="border p-3" style={{ height: '50vh', overflowY: 'auto' }}>
                     <VisualizationComponent 
                         clusterData={clusterResult && clusterResult.data} 
                         onSelected={handleItemSelected} 
                         selectedItem={selectedItem} />
-                </div>
+                </div> 
                 <div className="card">
                     <div className="card-header"><h2>Cluster Results</h2></div>
                     <div className="card-body">
                         <ClusterDataDisplay 
                             clusterResult={clusterResult} 
                             selectedItem={selectedItem} 
-                            onItemSelected={handleItemSelected} />
+                            onItemSelected={handleItemSelected} 
+                            dataReloadIdentifier={dataReloadIdentifier} />
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
   );

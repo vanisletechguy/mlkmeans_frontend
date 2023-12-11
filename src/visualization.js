@@ -3,9 +3,18 @@ import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+
+const clusterColors = [
+    0xff0000, // red
+    0x0000ff, // blue
+    0x00ff00, // green
+    0xffff00, // yellow
+    0xff00ff, // magenta
+];
+
 const VisualizationComponent = ({ clusterData, onSelected, selectedItem }) => {
     const mountRef = useRef(null);
-    const selectedSphereRef = useRef(null); // useRef to keep track of the selected sphere
+    const selectedSphereRef = useRef(null); 
     const sceneRef = useRef(null);
 
     useEffect(() => {
@@ -18,11 +27,11 @@ const VisualizationComponent = ({ clusterData, onSelected, selectedItem }) => {
         if (sceneRef && selectedItem) {
             sceneRef.current.traverse(function (object) {
                 if (object.isMesh) {
-                    const isCurrentSelected = object.userData.x === selectedItem.x &&
+                     const isCurrentSelected = object.userData.x === selectedItem.x &&
                                               object.userData.y === selectedItem.y &&
                                               object.userData.z === selectedItem.z;
-                    const originalColor = object.userData.clusterId === 0 ? 0xff0000 : 0x0000ff;
-                    object.material.color.setHex(isCurrentSelected ? 0x00ff00 : originalColor);
+                    const originalColor = clusterColors[object.userData.clusterId % clusterColors.length];
+                    object.material.color.setHex(isCurrentSelected ? 0x00ffff : originalColor);
                 }
             });
         }
@@ -51,14 +60,12 @@ const VisualizationComponent = ({ clusterData, onSelected, selectedItem }) => {
                     const prevColor = selectedSphereRef.current.userData.clusterId === 0 ? 0xff0000 : 0x0000ff;
                     selectedSphereRef.current.material.color.setHex(prevColor);
                 }
-                newSelectedObject.material.color.setHex(0x00ff00); // Change to green for selection
+                newSelectedObject.material.color.setHex(0x00ff00); // Change to cyan for selection
                 newSelectedObject.material.needsUpdate = true;
                 selectedSphereRef.current = newSelectedObject;
                 onSelected(newSelectedObject.userData);
             }
         }; // onDocumentMouseDown function ends
-
-    document.addEventListener('mousedown', onDocumentMouseDown, false);
 
     // Destructure width and height from the parent container
     const width = mountRef.current.clientWidth;
@@ -68,30 +75,23 @@ const VisualizationComponent = ({ clusterData, onSelected, selectedItem }) => {
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-        //    camera.position.set(20, 20, 30); // X, Y, Z
-        //camera.lookAt(new THREE.Vector3(8, 8, 10)); // Adjust based on your data's center
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(width, height);
     mountRef.current.appendChild(renderer.domElement);
 
     // Add cluster data to the scene
-    const cluster0Material = new THREE.MeshBasicMaterial({ color: 'red' });
-    const cluster1Material = new THREE.MeshBasicMaterial({ color: 'blue' });
-    const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+        //    const cluster0Material = new THREE.MeshBasicMaterial({ color: 'red' });
+        //    const cluster1Material = new THREE.MeshBasicMaterial({ color: 'blue' });
+        //    const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
 
     clusterData.forEach(dataPoint => {
-        // Determine the color of the sphere based on clustering
-        let sphereColor;
-        if (dataPoint.clusterId !== undefined) {
-            // Clustering done, use colors based on clusterId
-            sphereColor = dataPoint.clusterId === 0 ? 0xff0000 : 0x0000ff;
-        } else {
-            // Clustering not done, use a default color (e.g., grey)
-            sphereColor = 0xaaaaaa;
-        }
 
-        // Create sphere material with the determined color
+
+        const colorIndex = dataPoint.clusterId % clusterColors.length; // Use modulo to avoid out-of-range errors
+        const sphereColor = clusterColors[colorIndex];
+
+        // Create sphere material with the selected color
         const sphereMaterial = new THREE.MeshBasicMaterial({ color: sphereColor });
 
         // Rest of the sphere creation code
@@ -114,7 +114,6 @@ const VisualizationComponent = ({ clusterData, onSelected, selectedItem }) => {
     });
 
 
-
     let sumX = 0, sumY = 0, sumZ = 0;
         clusterData.forEach(point => {
             sumX += point.x;
@@ -128,16 +127,15 @@ const VisualizationComponent = ({ clusterData, onSelected, selectedItem }) => {
     const center = new THREE.Vector3(centerX, centerY, centerZ);
 
     // Update camera position and orbit controls target
-    camera.position.set(centerX, centerY, centerZ + 20); // Adjust '30' to set how far away the camera is
+    camera.position.set(centerX, centerY, centerZ + 20); 
     camera.lookAt(center);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-        //controls.target.set(8, 10, 10);
     controls.target.set(centerX, centerY, centerZ);
 
     controls.update();
 
-    renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
+        renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false); //////////??
 
     // Render loop
     const animate = () => {
@@ -150,8 +148,14 @@ const VisualizationComponent = ({ clusterData, onSelected, selectedItem }) => {
     // Clean up on component unmount
     return () => {
       mountRef.current.removeChild(renderer.domElement);
-      document.removeEventListener('mousedown', onDocumentMouseDown);
+      renderer.domElement.removeEventListener('mousedown', onDocumentMouseDown);
 
+        sceneRef.current.children.forEach(child => {
+            sceneRef.current.remove(child);
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) child.material.dispose();
+        });
+        renderer.dispose();
     };
   }, [clusterData]); // Re-run effect if clusterData changes
 

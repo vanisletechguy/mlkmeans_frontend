@@ -1,41 +1,20 @@
-//clusterDataDisplay.js
-import React, {useState, useEffect} from 'react';
+import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-function ClusteredDataDisplay({ clusterResult, selectedItem, onItemSelected }) {
-
-    const [forceUpdate, setForceUpdate] = useState(0);
-
-    const triggerForceUpdate = () => {
-        setForceUpdate(prev => prev + 1);
-    };
-
-    //console.log('Cluster result in display:', clusterResult);
-
-    useEffect(() => {
-        console.log("Selected item changed:", selectedItem);
-        triggerForceUpdate();
-    }, [selectedItem]);
-
+function ClusteredDataDisplay({ clusterResult, selectedItem, onItemSelected, dataReloadIdentifier }) {
 
     if (!clusterResult || !clusterResult.data) {
         return <p>No clustering data available.</p>;
     }
 
-    const cluster0Data = clusterResult.data.filter(item => item.clusterId === 0);
-    const cluster1Data = clusterResult.data.filter(item => item.clusterId === 1);
+    const uniqueClusterIds = [...new Set(clusterResult.data.map(item => item.clusterId))];
+
     const isItemSelected = (item) => {
-        const isSelected = selectedItem && 
-            item.x === selectedItem.x && 
-            item.y === selectedItem.y && 
-            item.z === selectedItem.z;
-        //console.log("Row selected status:", isSelected, "for item:", item);
-        return isSelected;
+        return selectedItem && item.x === selectedItem.x && item.y === selectedItem.y && item.z === selectedItem.z;
     };
 
     const handleRowClick = (itemData) => {
-        onItemSelected(itemData); // Update selectedItem in App.js
-        setForceUpdate(prev => prev + 1); // Force update on row click
-        //console.log("Row clicked:", itemData);
+        onItemSelected(itemData); 
     };
 
     const renderTable = (data, clusterId) => (
@@ -49,27 +28,38 @@ function ClusteredDataDisplay({ clusterResult, selectedItem, onItemSelected }) {
                         <th>Z</th>
                     </tr>
                 </thead>
+
                 <tbody>
-                    {data.map((item, index) => (
-                        <tr key={index}
-                            onClick={() => handleRowClick(item)}
-                            className={isItemSelected(item) ? 'selectedRow' : 'unselectedRow'}>
-                        <td>{item.x}</td>
-                        <td>{item.y}</td>
-                        <td>{item.z}</td>
-                    </tr>
-                    ))}
+                    {data.map((item) => {
+                        const key = uuidv4();
+                        return (
+                            <tr key={key}
+                                onClick={() => handleRowClick(item)}
+                                className={isItemSelected(item) ? 'selectedRow' : ''}>
+                                <td>{item.x}</td>
+                                <td>{item.y}</td>
+                                <td>{item.z}</td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>
     );
 
+    if (!clusterResult || !clusterResult.data) {
+        return <p>No clustering data available.</p>;
+    }
+
     return (
         <div className="d-flex justify-content-around" style={{ gap: '20px' }}>
-            {renderTable(cluster0Data, 0)}
-            {renderTable(cluster1Data, 1)}
+
+            {uniqueClusterIds.map(clusterId => {
+                const clusterData = clusterResult.data.filter(item => item.clusterId === clusterId);
+                return renderTable(clusterData, clusterId);
+            })}
         </div>
     );
 }
 
-export default ClusteredDataDisplay;
+export default React.memo(ClusteredDataDisplay);
